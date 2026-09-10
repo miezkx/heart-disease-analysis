@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Brak wyników modeli{% endblock %}
+
+{% block content %}
+  <section class="empty-state models-empty">
+    <div class="eyebrow">Uczenie maszynowe</div>
+    <h1>Brak wyników treningu</h1>
+    <p>{{ error_message }}</p>
+    <code>python -m scripts.train_models</code>
+  </section>
+{% endblock %}

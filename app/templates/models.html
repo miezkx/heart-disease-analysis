@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Porównanie modeli{% endblock %}
+
+{% block content %}
+  <header class="page-heading mb-4">
+    <h1>Porównanie modeli</h1>
+  </header>
+
+  <section class="winner-panel mb-4" aria-labelledby="winner-title">
+    <div>
+      <div class="winner-label">Model wybrany</div>
+      <h2 id="winner-title">{{ selected.display_name }}</h2>
+    </div>
+  </section>
+
+  <section class="method-strip mb-4" aria-label="Metodyka oceny">
+    <div><span>Podział testowy</span><strong>{{ "%.0f%%"|format(selection_policy.test_size * 100) }}</strong></div>
+    <div><span>Walidacja</span><strong>{{ selection_policy.cv_folds }} foldów</strong></div>
+    <div><span>Próg klasyfikacji</span><strong>{{ selection_policy.decision_threshold }}</strong></div>
+    <div><span>Rozmiar danych</span><strong>{{ dataset.rows }} rekordów</strong></div>
+  </section>
+
+  <section class="model-table-card mb-4" aria-labelledby="comparison-title">
+    <div class="table-card-header">
+      <div>
+        <h2 id="comparison-title" class="mb-0">Wyniki porównania</h2>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table model-table mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Model</th>
+            <th scope="col">CV ROC AUC</th>
+            <th scope="col">Accuracy</th>
+            <th scope="col">Precision</th>
+            <th scope="col">Recall</th>
+            <th scope="col">F1</th>
+            <th scope="col">Test ROC AUC</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for model in models %}
+            <tr>
+              <th scope="row">
+                {{ model.display_name }}
+              </th>
+              <td>
+                <strong>{{ "%.3f"|format(model.cv.roc_auc.mean) }}</strong>
+                <small>± {{ "%.3f"|format(model.cv.roc_auc.std) }}</small>
+              </td>
+              <td>{{ "%.3f"|format(model.test.accuracy) }}</td>
+              <td>{{ "%.3f"|format(model.test.precision) }}</td>
+              <td>{{ "%.3f"|format(model.test.recall) }}</td>
+              <td>{{ "%.3f"|format(model.test.f1) }}</td>
+              <td>{{ "%.3f"|format(model.test.roc_auc) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="chart-card mb-4" aria-label="Krzywe ROC">
+    {{ roc_chart|safe }}
+  </section>
+
+  <section class="mb-4" aria-labelledby="confusion-title">
+    <h2 id="confusion-title" class="mb-3">Macierze pomyłek</h2>
+    <div class="row g-4">
+      {% for chart in confusion_charts %}
+        <div class="col-lg-4">
+          <article class="chart-card confusion-card">
+            {{ chart.html|safe }}
+          </article>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="row g-4 mb-4" aria-labelledby="parameters-title">
+    <div class="col-12">
+      <h2 id="parameters-title">Najlepsze parametry</h2>
+    </div>
+    {% for model in models %}
+      <div class="col-lg-4">
+        <article class="parameter-card">
+          <h3>{{ model.display_name }}</h3>
+          <dl>
+            {% for parameter in model.parameters %}
+              <div><dt>{{ parameter.name }}</dt><dd>{{ parameter.value }}</dd></div>
+            {% endfor %}
+          </dl>
+        </article>
+      </div>
+    {% endfor %}
+  </section>
+
+{% endblock %}

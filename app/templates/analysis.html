@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Analiza danych{% endblock %}
+
+{% block content %}
+  <header class="page-heading mb-4">
+    <h1>Filtrowanie i analiza</h1>
+  </header>
+
+  <section class="filter-panel mb-4" aria-labelledby="filters-title">
+    <div class="mb-3">
+      <h2 id="filters-title" class="mb-0">Filtry</h2>
+    </div>
+
+    {% if errors %}
+      <div class="alert alert-warning" role="alert">
+        <ul class="mb-0">
+          {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <form method="get" action="{{ url_for('analysis.index') }}" class="row g-3">
+      <div class="col-6 col-lg-2">
+        <label class="form-label" for="age_min">Wiek od</label>
+        <input
+          class="form-control"
+          id="age_min"
+          name="age_min"
+          type="number"
+          min="{{ options.age_min }}"
+          max="{{ options.age_max }}"
+          value="{{ filters.age_min if filters.age_min is not none else '' }}"
+          placeholder="{{ options.age_min }}"
+        >
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label" for="age_max">Wiek do</label>
+        <input
+          class="form-control"
+          id="age_max"
+          name="age_max"
+          type="number"
+          min="{{ options.age_min }}"
+          max="{{ options.age_max }}"
+          value="{{ filters.age_max if filters.age_max is not none else '' }}"
+          placeholder="{{ options.age_max }}"
+        >
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label" for="sex">Płeć</label>
+        <select class="form-select" id="sex" name="sex">
+          <option value="">Wszystkie</option>
+          {% for value in options.sex %}
+            <option value="{{ value }}" {{ 'selected' if filters.sex == value else '' }}>
+              {{ 'Kobieta' if value == 'F' else 'Mężczyzna' }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label" for="chest_pain">Typ bólu</label>
+        <select class="form-select" id="chest_pain" name="chest_pain">
+          <option value="">Wszystkie</option>
+          {% for value in options.chest_pain %}
+            <option value="{{ value }}" {{ 'selected' if filters.chest_pain == value else '' }}>
+              {{ value }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label" for="exercise_angina">Dusznica wysiłkowa</label>
+        <select class="form-select" id="exercise_angina" name="exercise_angina">
+          <option value="">Wszystkie</option>
+          {% for value in options.exercise_angina %}
+            <option value="{{ value }}" {{ 'selected' if filters.exercise_angina == value else '' }}>
+              {{ 'Tak' if value == 'Y' else 'Nie' }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label" for="heart_disease">HeartDisease</label>
+        <select class="form-select" id="heart_disease" name="heart_disease">
+          <option value="">Obie klasy</option>
+          <option value="0" {{ 'selected' if filters.heart_disease == 0 else '' }}>Klasa 0</option>
+          <option value="1" {{ 'selected' if filters.heart_disease == 1 else '' }}>Klasa 1</option>
+        </select>
+      </div>
+      <div class="col-12 d-flex flex-wrap gap-2 pt-1">
+        <button class="btn btn-primary app-button" type="submit">Zastosuj filtry</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('analysis.index') }}">Wyczyść</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="row g-3 mb-4" aria-label="Podsumowanie filtrowania">
+    <div class="col-6 col-xl-3">
+      <article class="compact-metric">
+        <span>Widoczne rekordy</span>
+        <strong>{{ summary.rows }} <small>/ {{ summary.all_rows }}</small></strong>
+      </article>
+    </div>
+    <div class="col-6 col-xl-3">
+      <article class="compact-metric">
+        <span>Udział klasy 1</span>
+        <strong>
+          {{ "%.1f%%"|format(summary.positive_rate * 100) if summary.positive_rate is not none else "—" }}
+        </strong>
+      </article>
+    </div>
+    <div class="col-6 col-xl-3">
+      <article class="compact-metric">
+        <span>Średni cholesterol</span>
+        <strong>
+          {{ "%.1f"|format(summary.mean_cholesterol) if summary.mean_cholesterol is not none else "—" }}
+          <small>mg/dl</small>
+        </strong>
+      </article>
+    </div>
+    <div class="col-6 col-xl-3">
+      <article class="compact-metric">
+        <span>Średnie MaxHR</span>
+        <strong>
+          {{ "%.1f"|format(summary.mean_max_hr) if summary.mean_max_hr is not none else "—" }}
+          <small>ud./min</small>
+        </strong>
+      </article>
+    </div>
+  </section>
+
+  {% if summary.rows %}
+    <section class="row g-4 mb-4" aria-label="Wykresy przefiltrowanych danych">
+      <div class="col-xl-8"><article class="chart-card">{{ charts.scatter|safe }}</article></div>
+      <div class="col-xl-4"><article class="chart-card">{{ charts.target|safe }}</article></div>
+      <div class="col-12"><article class="chart-card">{{ charts.cholesterol|safe }}</article></div>
+    </section>
+  {% else %}
+    <section class="empty-state mb-4">
+      <strong>Brak pasujących rekordów</strong>
+      <p>Zmień lub wyczyść filtry, aby ponownie wyświetlić dane.</p>
+      <a class="btn btn-outline-secondary" href="{{ url_for('analysis.index') }}">Wyczyść filtry</a>
+    </section>
+  {% endif %}
+
+  <section class="data-table-card" aria-labelledby="table-title">
+    <div class="table-card-header">
+      <h2 id="table-title" class="mb-0">Rekordy po filtrowaniu</h2>
+    </div>
+    <div class="table-responsive">
+      <table class="table data-table mb-0">
+        <thead>
+          <tr>{% for column in table.columns %}<th scope="col">{{ column }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+          {% for row in table.rows %}
+            <tr>
+              {% for column in table.columns %}
+                <td>{{ row[column] }}</td>
+              {% endfor %}
+            </tr>
+          {% else %}
+            <tr><td colspan="{{ table.columns|length }}" class="text-center py-4">Brak danych</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pagination.total_pages > 1 %}
+      <nav class="table-pagination" aria-label="Strony tabeli">
+        <a
+          class="btn btn-sm btn-outline-secondary {{ 'disabled' if not pagination.has_previous else '' }}"
+          href="{{ pagination.previous_url or '#' }}"
+          {% if not pagination.has_previous %}aria-disabled="true" tabindex="-1"{% endif %}
+        >Poprzednia</a>
+        <span>Strona {{ pagination.page }} z {{ pagination.total_pages }}</span>
+        <a
+          class="btn btn-sm btn-outline-secondary {{ 'disabled' if not pagination.has_next else '' }}"
+          href="{{ pagination.next_url or '#' }}"
+          {% if not pagination.has_next %}aria-disabled="true" tabindex="-1"{% endif %}
+        >Następna</a>
+      </nav>
+    {% endif %}
+  </section>
+{% endblock %}

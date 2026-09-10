@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Predykcja{% endblock %}
+
+{% macro input_error(field) -%}
+  {% if errors.get(field) %}<div class="invalid-feedback">{{ errors[field] }}</div>{% endif %}
+{%- endmacro %}
+
+{% macro selected(field, value) -%}
+  {{ 'selected' if values.get(field, '')|string == value|string else '' }}
+{%- endmacro %}
+
+{% block content %}
+  <header class="page-heading mb-4">
+    <h1>Sprawdź wynik modelu</h1>
+  </header>
+
+  {% if errors.get('model') %}
+    <div class="alert alert-danger" role="alert">{{ errors.model }}</div>
+  {% endif %}
+  {% if errors.get('history') %}
+    <div class="alert alert-warning" role="alert">{{ errors.history }}</div>
+  {% endif %}
+
+  <div class="prediction-layout {{ 'prediction-layout-with-result' if result else 'prediction-layout-form-only' }}">
+    <section class="prediction-form-card" aria-labelledby="prediction-form-title">
+      <h2 id="prediction-form-title">Dane wejściowe</h2>
+      <form method="post" action="{{ url_for('prediction.index') }}" novalidate>
+        <fieldset>
+          <legend>Dane podstawowe</legend>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label" for="Age">Wiek</label>
+              <input class="form-control {{ 'is-invalid' if errors.get('Age') else '' }}" id="Age" name="Age" type="number" min="28" max="77" value="{{ values.get('Age', '') }}" placeholder="28–77" required>
+              {{ input_error('Age') }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="Sex">Płeć</label>
+              <select class="form-select {{ 'is-invalid' if errors.get('Sex') else '' }}" id="Sex" name="Sex" required>
+                <option value="">Wybierz</option>
+                <option value="F" {{ selected('Sex', 'F') }}>Kobieta</option>
+                <option value="M" {{ selected('Sex', 'M') }}>Mężczyzna</option>
+              </select>
+              {{ input_error('Sex') }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="ChestPainType">Typ bólu w klatce</label>
+              <select class="form-select {{ 'is-invalid' if errors.get('ChestPainType') else '' }}" id="ChestPainType" name="ChestPainType" required>
+                <option value="">Wybierz</option>
+                <option value="ASY" {{ selected('ChestPainType', 'ASY') }}>ASY — bezobjawowy</option>
+                <option value="ATA" {{ selected('ChestPainType', 'ATA') }}>ATA — atypowa dusznica</option>
+                <option value="NAP" {{ selected('ChestPainType', 'NAP') }}>NAP — ból niedusznicowy</option>
+                <option value="TA" {{ selected('ChestPainType', 'TA') }}>TA — typowa dusznica</option>
+              </select>
+              {{ input_error('ChestPainType') }}
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Pomiary</legend>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="RestingBP">Ciśnienie spoczynkowe <small>mmHg</small></label>
+              <input class="form-control {{ 'is-invalid' if errors.get('RestingBP') else '' }}" id="RestingBP" name="RestingBP" type="number" min="80" max="200" value="{{ values.get('RestingBP', '') }}" placeholder="80–200" required>
+              {{ input_error('RestingBP') }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="Cholesterol">Cholesterol <small>mg/dl</small></label>
+              <input class="form-control {{ 'is-invalid' if errors.get('Cholesterol') else '' }}" id="Cholesterol" name="Cholesterol" type="number" min="85" max="603" value="{{ values.get('Cholesterol', '') }}" placeholder="85–603" required>
+              {{ input_error('Cholesterol') }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="FastingBS">Cukier na czczo &gt; 120</label>
+              <select class="form-select {{ 'is-invalid' if errors.get('FastingBS') else '' }}" id="FastingBS" name="FastingBS" required>
+                <option value="">Wybierz</option>
+                <option value="0" {{ selected('FastingBS', 0) }}>Nie</option>
+                <option value="1" {{ selected('FastingBS', 1) }}>Tak</option>
+              </select>
+              {{ input_error('FastingBS') }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="MaxHR">Maksymalne tętno <small>ud./min</small></label>
+              <input class="form-control {{ 'is-invalid' if errors.get('MaxHR') else '' }}" id="MaxHR" name="MaxHR" type="number" min="60" max="202" value="{{ values.get('MaxHR', '') }}" placeholder="60–202" required>
+              {{ input_error('MaxHR') }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="Oldpeak">Oldpeak <small>ST</small></label>
+              <input class="form-control {{ 'is-invalid' if errors.get('Oldpeak') else '' }}" id="Oldpeak" name="Oldpeak" type="number" step="0.1" min="-2.6" max="6.2" value="{{ values.get('Oldpeak', '') }}" placeholder="−2,6–6,2" required>
+              {{ input_error('Oldpeak') }}
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Wyniki wysiłkowe i EKG</legend>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label" for="RestingECG">EKG spoczynkowe</label>
+              <select class="form-select {{ 'is-invalid' if errors.get('RestingECG') else '' }}" id="RestingECG" name="RestingECG" required>
+                <option value="">Wybierz</option>
+                <option value="Normal" {{ selected('RestingECG', 'Normal') }}>Normal</option>
+                <option value="ST" {{ selected('RestingECG', 'ST') }}>ST</option>
+                <option value="LVH" {{ selected('RestingECG', 'LVH') }}>LVH</option>
+              </select>
+              {{ input_error('RestingECG') }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="ExerciseAngina">Dusznica wysiłkowa</label>
+              <select class="form-select {{ 'is-invalid' if errors.get('ExerciseAngina') else '' }}" id="ExerciseAngina" name="ExerciseAngina" required>
+                <option value="">Wybierz</option>
+                <option value="N" {{ selected('ExerciseAngina', 'N') }}>Nie</option>
+                <option value="Y" {{ selected('ExerciseAngina', 'Y') }}>Tak</option>
+              </select>
+              {{ input_error('ExerciseAngina') }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="ST_Slope">Nachylenie odcinka ST</label>
+              <select class="form-select {{ 'is-invalid' if errors.get('ST_Slope') else '' }}" id="ST_Slope" name="ST_Slope" required>
+                <option value="">Wybierz</option>
+                <option value="Up" {{ selected('ST_Slope', 'Up') }}>Up — rosnące</option>
+                <option value="Flat" {{ selected('ST_Slope', 'Flat') }}>Flat — płaskie</option>
+                <option value="Down" {{ selected('ST_Slope', 'Down') }}>Down — opadające</option>
+              </select>
+              {{ input_error('ST_Slope') }}
+            </div>
+          </div>
+        </fieldset>
+
+        <button class="btn btn-primary app-button prediction-submit" type="submit">
+          Oblicz wynik modelu
+        </button>
+      </form>
+    </section>
+
+    {% if result %}
+      <aside class="prediction-result-column" aria-live="polite">
+        <section class="prediction-result">
+          <h2>Klasa {{ result.predicted_class }}</h2>
+          <div class="probability-value">{{ "%.1f"|format(result.probability_percent) }}%</div>
+        </section>
+
+        <section class="explanation-card">
+          <h2>Co najbardziej zmieniało wynik?</h2>
+          <ol class="impact-list">
+            {% for item in result.explanations %}
+              <li>
+                <div>
+                  <strong>{{ item.label }}</strong>
+                </div>
+                <span class="impact-direction">
+                  {{ '+' if item.impact >= 0 else '−' }}{{ "%.1f"|format(item.impact_points) }} p.p.
+                </span>
+              </li>
+            {% endfor %}
+          </ol>
+        </section>
+      </aside>
+    {% endif %}
+  </div>
+{% endblock %}

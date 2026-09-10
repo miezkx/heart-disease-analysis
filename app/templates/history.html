@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Historia predykcji{% endblock %}
+
+{% block content %}
+  <header class="page-heading mb-4">
+    <h1>Historia predykcji</h1>
+  </header>
+
+  <section class="row g-3 mb-4" aria-label="Podsumowanie historii">
+    <div class="col-md-4">
+      <article class="compact-metric">
+        <span>Wszystkie predykcje</span>
+        <strong>{{ summary.total }}</strong>
+      </article>
+    </div>
+    <div class="col-md-4">
+      <article class="compact-metric">
+        <span>Klasa 1</span>
+        <strong>{{ summary.class_one }}</strong>
+      </article>
+    </div>
+    <div class="col-md-4">
+      <article class="compact-metric">
+        <span>Udział klasy 1</span>
+        <strong>{{ "%.1f"|format(summary.class_one_percent) }}%</strong>
+      </article>
+    </div>
+  </section>
+
+  {% if pagination.items %}
+    <section class="data-table-card history-card" aria-labelledby="history-table-title">
+      <div class="table-card-header">
+        <div>
+          <h2 id="history-table-title" class="mb-0">Zapisane wyniki</h2>
+        </div>
+        <span>Strona {{ pagination.page }} z {{ pagination.pages }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover history-table mb-0">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Data (UTC)</th>
+              <th scope="col">Klasa</th>
+              <th scope="col">Prawdopodobieństwo kl. 1</th>
+              <th scope="col">Model</th>
+              <th scope="col">Parametry</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in pagination.items %}
+              <tr>
+                <td>#{{ record.id }}</td>
+                <td>{{ record.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+                <td>{{ record.predicted_class }}</td>
+                <td>{{ "%.1f"|format(record.probability * 100) }}%</td>
+                <td>
+                  <strong>{{ record.model_name }}</strong>
+                </td>
+                <td>
+                  <details class="history-details">
+                    <summary>Pokaż 11 cech</summary>
+                    <dl>
+                      {% for field, value in record.input_data.items() %}
+                        <div>
+                          <dt>{{ field_labels.get(field, field) }}</dt>
+                          <dd>{{ value }}</dd>
+                        </div>
+                      {% endfor %}
+                    </dl>
+                  </details>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if pagination.pages > 1 %}
+        <nav class="table-pagination" aria-label="Strony historii">
+          {% if pagination.has_prev %}
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('history.index', page=pagination.prev_num) }}">Poprzednia</a>
+          {% else %}<span></span>{% endif %}
+          <span>{{ pagination.first }}–{{ pagination.last }} z {{ pagination.total }}</span>
+          {% if pagination.has_next %}
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('history.index', page=pagination.next_num) }}">Następna</a>
+          {% else %}<span></span>{% endif %}
+        </nav>
+      {% endif %}
+    </section>
+  {% else %}
+    <section class="empty-state">
+      <strong>Historia jest jeszcze pusta</strong>
+      <p>Pierwszy poprawnie obliczony wynik pojawi się tutaj automatycznie.</p>
+      <a class="btn btn-primary app-button" href="{{ url_for('prediction.index') }}">
+        Przejdź do predykcji
+      </a>
+    </section>
+  {% endif %}
+{% endblock %}

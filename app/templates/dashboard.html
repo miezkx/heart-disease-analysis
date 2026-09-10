@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <header class="page-heading mb-4">
+    <h1>Przegląd zbioru HeartDisease</h1>
+  </header>
+
+  <section class="row g-3 mb-4" aria-label="Podsumowanie zbioru">
+    <div class="col-6 col-xl-3">
+      <article class="metric-card">
+        <span class="metric-label">Rekordy</span>
+        <strong class="metric-value">{{ summary.rows }}</strong>
+      </article>
+    </div>
+    <div class="col-6 col-xl-3">
+      <article class="metric-card">
+        <span class="metric-label">Cechy wejściowe</span>
+        <strong class="metric-value">{{ summary.features }}</strong>
+      </article>
+    </div>
+    <div class="col-6 col-xl-3">
+      <article class="metric-card">
+        <span class="metric-label">HeartDisease = 1</span>
+        <strong class="metric-value">{{ "%.1f"|format(summary.positive_rate * 100) }}%</strong>
+      </article>
+    </div>
+    <div class="col-6 col-xl-3">
+      <article class="metric-card">
+        <span class="metric-label">Średni wiek</span>
+        <strong class="metric-value">{{ "%.1f"|format(summary.mean_age) }}</strong>
+      </article>
+    </div>
+  </section>
+
+  <section class="row g-4" aria-label="Wykresy opisowe">
+    <div class="col-xl-5">
+      <article class="chart-card">{{ charts.target|safe }}</article>
+    </div>
+    <div class="col-xl-7">
+      <article class="chart-card">{{ charts.age|safe }}</article>
+    </div>
+    <div class="col-xl-7">
+      <article class="chart-card">{{ charts.chest_pain|safe }}</article>
+    </div>
+    <div class="col-xl-5">
+      <article class="chart-card">{{ charts.max_hr|safe }}</article>
+    </div>
+  </section>
+
+{% endblock %}
